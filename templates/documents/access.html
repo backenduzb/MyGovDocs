@@ -1,0 +1,74 @@
+{% load static %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<link rel="stylesheet" href="{% static 'documents/access.css' %}">
+
+<div class="loader">
+    <img height="128" width="128" src="{% static 'img/logo.png' %}" alt="">
+    <div>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</div>
+
+<div class="container">
+
+    {% if not captcha_passed %}
+    <form method="post" id="captcha-form">
+        {% csrf_token %}
+        <div class="g-recaptcha" data-sitekey="6LcnXDwsAAAAAKOgJYPFLOK0uCxfnY5YlSsqAdH9"
+            data-callback="onCaptchaSuccess"></div>
+    </form>
+
+    <script>
+        function onCaptchaSuccess(token) {
+            document.getElementById("captcha-form").submit();
+        }
+    </script>
+
+    {% else %}
+    <form method="post"> {% csrf_token %} 
+        <p style="margin-bottom: 20px;"><b>Hujjatda berilgan PIN kodni kiriting</b></p>
+        <p><b>PIN kod</b></p> 
+        <input type="text" name="pin" id="pin" placeholder="PIN"> 
+        {% if error %} 
+            <p style="color:red">{{ error }}</p> 
+        {% endif %} 
+        <button type="submit">Ochish</button>
+        <p style="color: rgb(0, 163, 163); margin-top: 30px;">
+            <b>Hujjatda berilgan QR-kod yonidagi PIN kodni kiriting</b>
+        </p>
+    </form>
+    {% endif %}
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            var loader = document.querySelector('.loader');
+            var container = document.querySelector('.container');
+            
+            if (loader) {
+                loader.classList.add('hidden');
+            }
+            
+            if (container) {
+                container.classList.add('visible');
+                
+                if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+                    setTimeout(function() {
+                        var recaptchaElement = document.querySelector('.g-recaptcha');
+                        if (recaptchaElement && recaptchaElement.dataset.sitekey) {
+                            grecaptcha.render(recaptchaElement, {
+                                'sitekey': recaptchaElement.dataset.sitekey,
+                                'callback': onCaptchaSuccess
+                            });
+                        }
+                    }, 100);
+                }
+            }
+        }, 1000);
+    });
+</script>

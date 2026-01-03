@@ -1,0 +1,160 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #f3f4f6;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-container {
+    max-width: 500px;
+    width: 400px;
+    padding: 32px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.g-recaptcha {
+    transform: scale(1);
+    margin: 0 auto;
+}
+
+.form-container p {
+    margin: 0 0 10px;
+    font-weight: 600;
+    color: #374151;
+}
+
+#pin {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 5px;
+    border: 1px solid #d1d5db;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 16px;
+}
+
+#pin::placeholder {
+    color: #9ca3af;
+}
+
+#pin:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #22c55e;
+    border: none;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.05s;
+}
+
+button:hover {
+    background-color: #16a34a;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.form-container p[style*="color:red"] {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #dc2626 !important;
+}
+
+.loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    background-color: rgb(0, 31, 81);
+    z-index: 10000;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.container {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.container.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.loader div{
+    margin-top: 30px;
+    width: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.loader span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgb(54, 117, 255);
+    margin: 0 8px;
+    animation: animate 0.8s infinite ease-in-out;
+}
+
+.loader span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loader span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes animate {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(0);
+    }
+}
