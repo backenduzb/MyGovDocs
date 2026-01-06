@@ -1,5 +1,10 @@
 from django.db import models
+from string import digits
+from random import choices
 import uuid
+
+def generate_pin():
+    return ''.join(choices(digits, k=4))
 
 def guid_generator():
     raw = uuid.uuid4().hex
@@ -24,7 +29,7 @@ class Document(models.Model):
         default=guid_generator
     )
     have_qr = models.BooleanField(default=True)
-    pin = models.CharField(max_length=100)
+    pin = models.CharField(max_length=4, default=generate_pin)
     
     created = models.DateTimeField(auto_now_add=True)
 

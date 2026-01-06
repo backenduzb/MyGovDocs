@@ -4,13 +4,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <div class="container">
-    <form method="post"> {% csrf_token %} 
+    <form method="post"> 
         <p style="margin-bottom: 20px;"><b>Введите PIN-код для просмотра документа</b></p>
         <p><b>ПИН код</b></p> 
         <input type="text" name="pin" id="pin" placeholder="PIN"> 
         {% if error %} 
             <p style="color:red">{{ error }}</p> 
         {% endif %} 
+        {% csrf_token %}
         <button type="submit">Открыть</button>
         <p style="color: rgb(0, 90, 163); margin-top: 30px;">
             PIN-код размещается рядом с QR-кодом документа
