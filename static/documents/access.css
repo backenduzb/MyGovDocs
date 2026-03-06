@@ -24,7 +24,8 @@ body {
     justify-content: center;
     flex-direction: column;
 }
-.pin-img{
+
+.pin-img {
     height: 300px;
     width: 220px;
 }
