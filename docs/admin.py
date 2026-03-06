@@ -6,19 +6,27 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 from django.contrib import admin
 from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import Document
 
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    readonly_fields = ('guid', 'created')
+    readonly_fields = ('guid', 'created', 'qr_preview')
     fields = (
         'file',
         'guid',
         'pin',
-        'have_qr'
+        'have_qr',
+        'qr_preview',
     )
+
+    def qr_preview(self, obj):
+        if obj.qr:
+            return format_html('<img src="{}" width="200" height="200" />', obj.qr.url)
+        return "QR kod hali yaratilmagan"
+    qr_preview.short_description = "QR kod"
 
     def save_model(self, request, obj, form, change):
         old_obj = None
