@@ -102,8 +102,16 @@ button:active {
     opacity: 0;
     transition: opacity 0.5s ease;
     pointer-events: none;
+}
+
+.container.visible {
     opacity: 1;
     pointer-events: auto;
+}
+
+.loader.hidden {
+    opacity: 0;
+    visibility: hidden;
 }
 
 p{
