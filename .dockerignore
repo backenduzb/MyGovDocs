@@ -1,0 +1,78 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+.virtualenv
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media
+/static
+staticfiles/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.coverage
+.pytest_cache
+htmlcov/
+.tox/
+.hypothesis/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+docs/
+*.md
+!requirements.txt
+
+# Archives and backups
+.archive
+*.bak
+*.backup
+
+# OS
+Thumbs.db
+.DS_Store
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+*.orig
+.cache/
