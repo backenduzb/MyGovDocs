@@ -71,6 +71,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "config.urls"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_MANIFEST_STRICT = False
 
 TEMPLATES = [
     {
@@ -152,7 +153,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR / "static")
-# STATICFILES_DIRS = [os.path.join(BASE_DIR / 'static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR / 'static_src')]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/data/media")
