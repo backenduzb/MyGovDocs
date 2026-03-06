@@ -71,4 +71,9 @@ function onCaptchaSuccess(token) {
         document.getElementById("captcha-form").submit();
     }
 }
+
+window.addEventListener("load", function () {
+    document.querySelector(".loader").classList.add("hidden");
+    document.querySelector(".container").classList.add("visible");
+});
 </script>
