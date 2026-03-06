@@ -144,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "uz-UZ")
 TIME_ZONE = os.getenv("TIME_ZONE", "Asia/Tashkent")
-USE_I18N = True
+USE_I18N = True 
 USE_TZ = True
 
 
