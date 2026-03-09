@@ -90,8 +90,19 @@ class DocumentAdmin(admin.ModelAdmin):
              data-pin="{obj.pin}">
 
             <div class="pdf-editor-toolbar">
-                <label>QR scale:
-                    <input type="range" min="0.05" max="0.4" step="0.01" value="{obj.qr_scale}" id="qr-scale-slider">
+                <label class="qr-scale-control">
+                    <span class="qr-scale-control-label">QR scale:</span>
+                    <input
+                        type="range"
+                        min="0.05"
+                        max="0.4"
+                        step="0.01"
+                        value="{obj.qr_scale}"
+                        id="qr-scale-slider">
+                    <div class="qr-scale-indicator">
+                        <progress id="qr-scale-progress" class="qr-scale-progress" max="100" value="0"></progress>
+                        <span id="qr-scale-value" class="qr-scale-value">0</span>
+                    </div>
                 </label>
                 <label>PIN size:
                     <input type="range" min="8" max="40" step="0.5" value="{obj.pin_font_size}" id="pin-font-slider">
@@ -182,7 +193,7 @@ class DocumentAdmin(admin.ModelAdmin):
                 page.insert_image(qr_rect, filename=obj.qr.path, overlay=True)
 
             pin_x = clamp((obj.pin_x or 0) * width, 0, width)
-            pin_y = clamp((obj.pin_y or 0) * height, 0, height)
+            pin_y = clamp((obj.pin_y or 0) * height, 0, height + 14)
             pin_font = max(obj.pin_font_size or 22.5, 6)
             page.insert_text(
                 fitz.Point(pin_x, pin_y),

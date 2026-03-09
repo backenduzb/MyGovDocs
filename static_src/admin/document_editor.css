@@ -9,6 +9,55 @@
     align-items: center;
 }
 
+.qr-scale-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+}
+
+.qr-scale-control-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.qr-scale-control input[type="range"] {
+    width: 220px;
+}
+
+.qr-scale-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.qr-scale-progress {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e7eb;
+    appearance: none;
+}
+
+.qr-scale-progress::-webkit-progress-bar {
+    background: transparent;
+}
+
+.qr-scale-progress::-webkit-progress-value {
+    background: #2563eb;
+}
+
+.qr-scale-progress:-moz-progress-bar {
+    background: #2563eb;
+}
+
+.qr-scale-value {
+    min-width: 30px;
+    font-weight: 600;
+    text-align: right;
+}
+
 .pdf-editor-stage {
     position: relative;
     display: inline-block;

@@ -49,4 +49,4 @@ class Document(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Doc #{self.guid}"
+        return f"Doc #{self.pin}"
