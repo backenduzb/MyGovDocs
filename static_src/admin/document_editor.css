@@ -44,10 +44,17 @@
     color: #0b57d0;
 }
 
+.qr-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
 .pin-box {
     min-width: 40px;
     padding: 4px 8px;
-    background: rgba(255,255,255,0.85);
+    background: rgba(255, 255, 255, 0.85);
     border: 1px dashed #333;
     font-weight: bold;
     font-size: 22.5px;
