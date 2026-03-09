@@ -27,7 +27,9 @@ class Document(models.Model):
     file = models.FileField(upload_to='docs/')
     source_file = models.FileField(upload_to='docs/source/', blank=True, editable=False)
     qr = models.ImageField(upload_to='qr/', blank=True)
-
+    
+    qr_page = models.IntegerField(default=1) 
+    
     guid = models.CharField(
         max_length=40,
         unique=True,

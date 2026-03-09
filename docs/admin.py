@@ -23,6 +23,7 @@ class DocumentAdmin(admin.ModelAdmin):
         'guid',
         'pin',
         'qr_preview',
+        'qr_page',
         'pdf_editor',
         'qr_x',
         'qr_y',
@@ -117,7 +118,6 @@ class DocumentAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-        # source_file ni bir marta original nusxa sifatida saqlaymiz
         file_changed = False
         if old_obj and old_obj.file != obj.file:
             file_changed = True
@@ -136,7 +136,6 @@ class DocumentAdmin(admin.ModelAdmin):
             )
             obj.save(update_fields=['source_file'])
 
-        # QR yaratish
         url = request.build_absolute_uri(
             reverse('doc-access') + f'?guid={obj.guid}'
         ).replace('http://', 'https://')
@@ -156,16 +155,15 @@ class DocumentAdmin(admin.ModelAdmin):
             obj.save(update_fields=['qr'])
             return
 
-        # ASL NUSXA dan qayta build qilamiz
         source_pdf_path = obj.source_file.path
         output_pdf_path = obj.file.path
 
         doc = fitz.open(source_pdf_path)
-        page = doc[-1]
+        page_index = max(0, min(obj.qr_page - 1, len(doc) - 1))
+        page = doc[page_index]
 
         w, h = page.rect.width, page.rect.height
 
-        # QR
         qr_size = min(w, h) * obj.qr_scale
         qr_x = w * obj.qr_x
         qr_y = h * obj.qr_y
@@ -178,7 +176,6 @@ class DocumentAdmin(admin.ModelAdmin):
         )
         page.insert_image(qr_rect, stream=qr_bytes)
 
-        # PIN
         pin_x = w * obj.pin_x
         pin_y = h * obj.pin_y
 
