@@ -202,10 +202,10 @@ class DocumentAdmin(admin.ModelAdmin):
                 page.insert_image(qr_rect, filename=obj.qr.path, overlay=True)
 
             pin_x = clamp((obj.pin_x or 0) * width, 0, width)
-            pin_y = clamp((obj.pin_y or 0) * height, 0, height - 20)
+            pin_y = clamp((obj.pin_y or 0) * height, 0, height)
             pin_font = max(obj.pin_font_size or 22.5, 6)
             page.insert_text(
-                fitz.Point(pin_x, pin_y),
+                fitz.Point(pin_x, (pin_y - 20)),
                 obj.pin or "",
                 fontname="helv",
                 fontsize=pin_font,
