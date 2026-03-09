@@ -22,8 +22,8 @@ class DocumentAdmin(admin.ModelAdmin):
         'file',
         'guid',
         'pin',
-        'qr_preview',
         'qr_page',
+        'qr_preview',
         'pdf_editor',
         'qr_x',
         'qr_y',
@@ -188,7 +188,9 @@ class DocumentAdmin(admin.ModelAdmin):
             color=(0, 0, 0)
         )
 
-        tmp = output_pdf_path.replace('.pdf', '_tmp.pdf')
+        base, ext = os.path.splitext(output_pdf_path)
+        tmp = f"{base}_tmp{ext}"
+
         doc.save(tmp, garbage=4, deflate=True)
         doc.close()
 
