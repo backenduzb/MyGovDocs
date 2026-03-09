@@ -149,4 +149,51 @@ class DocumentAdmin(admin.ModelAdmin):
 
         obj.qr.save(f"doc_{obj.guid}.png", ContentFile(qr_bytes), save=False)
 
-        obj.save(update_fields=["qr"])
+        self._render_pdf_with_qr(obj)
+
+        obj.save(update_fields=["qr", "file"])
+
+    def _render_pdf_with_qr(self, obj):
+        if not obj.source_file or not obj.qr or not obj.file:
+            return
+
+        try:
+            doc = fitz.open(obj.source_file.path)
+        except Exception:
+            return
+
+        try:
+            page_index = max(0, min(obj.qr_page - 1, len(doc) - 1))
+            page = doc[page_index]
+            width = page.rect.width
+            height = page.rect.height
+
+            def clamp(value, minimum, maximum):
+                return max(minimum, min(maximum, value))
+
+            qr_scale = max(obj.qr_scale or 0.14, 0.01)
+            qr_size = min(width, height) * qr_scale
+
+            qr_x = clamp((obj.qr_x or 0) * width, 0, max(0, width - qr_size))
+            qr_y = clamp((obj.qr_y or 0) * height, 0, max(0, height - qr_size))
+
+            qr_rect = fitz.Rect(qr_x, qr_y, qr_x + qr_size, qr_y + qr_size)
+            if os.path.exists(obj.qr.path):
+                page.insert_image(qr_rect, filename=obj.qr.path, overlay=True)
+
+            pin_x = clamp((obj.pin_x or 0) * width, 0, width)
+            pin_y = clamp((obj.pin_y or 0) * height, 0, height)
+            pin_font = max(obj.pin_font_size or 22.5, 6)
+            page.insert_text(
+                fitz.Point(pin_x, pin_y),
+                obj.pin or "",
+                fontname="helv",
+                fontsize=pin_font,
+                color=(0, 0, 0),
+            )
+
+            pdf_bytes = doc.write()
+        finally:
+            doc.close()
+
+        obj.file.save(obj.file.name, ContentFile(pdf_bytes), save=False)
