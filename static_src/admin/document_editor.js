@@ -17,10 +17,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const pinYInput = document.getElementById("id_pin_y");
   const pinFontInput = document.getElementById("id_pin_font_size");
   const qrScaleValue = document.getElementById("qr-scale-value");
-  const qrScaleProgress = document.getElementById("qr-scale-progress");
+  const pinFontValue = document.getElementById("pin-font-value");
   const qrScaleMin = qrScaleSlider ? parseFloat(qrScaleSlider.min) || 0 : 0;
   const qrScaleMax = qrScaleSlider ? parseFloat(qrScaleSlider.max) || 1 : 1;
   const qrScaleRange = Math.max(qrScaleMax - qrScaleMin, 0.0001);
+  const pinFontMin = pinFontSlider ? parseFloat(pinFontSlider.min) || 0 : 0;
+  const pinFontMax = pinFontSlider ? parseFloat(pinFontSlider.max) || 1 : 1;
+  const pinFontRange = Math.max(pinFontMax - pinFontMin, 0.0001);
 
   const dataQrX = parseFloat(root.dataset.qrX || 0.78);
   const dataQrY = parseFloat(root.dataset.qrY || 0.78);
@@ -51,17 +54,16 @@ document.addEventListener("DOMContentLoaded", function () {
       parseFloat(pinFontInput.value || dataPinFont) + "px";
   }
 
-  function updateScaleIndicator(value) {
-    if (!qrScaleValue && !qrScaleProgress) return;
-    let ratio = (parseFloat(value) - qrScaleMin) / qrScaleRange;
-    ratio = Math.max(0, Math.min(1, ratio));
-    const percent = Math.round(ratio * 99) + 1;
-    if (qrScaleValue) {
-      qrScaleValue.textContent = percent;
-    }
-    if (qrScaleProgress) {
-      qrScaleProgress.value = percent;
-    }
+  function sliderPercent(slider, min, range) {
+    if (!slider) return 0;
+    const value = parseFloat(slider.value || slider.defaultValue || min);
+    return Math.round(Math.max(0, Math.min(1, (value - min) / range)) * 99) + 1;
+  }
+
+  function updateSliderLabel(slider, label, min, range) {
+    if (!slider || !label) return;
+    const percent = sliderPercent(slider, min, range);
+    label.textContent = `${percent}%`;
   }
 
   function makeDraggable(el, onStop) {
@@ -115,13 +117,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   qrScaleSlider.addEventListener("input", function () {
     qrScaleInput.value = this.value;
-    updateScaleIndicator(this.value);
+    updateSliderLabel(qrScaleSlider, qrScaleValue, qrScaleMin, qrScaleRange);
     placeElements();
     saveQrPosition();
   });
 
   pinFontSlider.addEventListener("input", function () {
     pinFontInput.value = this.value;
+    updateSliderLabel(pinFontSlider, pinFontValue, pinFontMin, pinFontRange);
     pinBox.style.fontSize = this.value + "px";
   });
 
@@ -133,7 +136,8 @@ document.addEventListener("DOMContentLoaded", function () {
     pinYInput.value = pinYInput.value || dataPinY;
     pinFontInput.value = pinFontInput.value || dataPinFont;
 
-    updateScaleIndicator(qrScaleInput.value);
+    updateSliderLabel(qrScaleSlider, qrScaleValue, qrScaleMin, qrScaleRange);
+    updateSliderLabel(pinFontSlider, pinFontValue, pinFontMin, pinFontRange);
 
     placeElements();
 

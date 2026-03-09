@@ -9,53 +9,36 @@
     align-items: center;
 }
 
-.qr-scale-control {
+.slider-control {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     align-items: flex-start;
 }
 
-.qr-scale-control-label {
+.slider-control-label {
     font-weight: 600;
     font-size: 0.95rem;
+    color: #111827;
 }
 
-.qr-scale-control input[type="range"] {
-    width: 220px;
-}
-
-.qr-scale-indicator {
+.slider-value-row {
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+}
+
+.slider-value-row input[type="range"] {
+    flex: 1;
     width: 100%;
 }
 
-.qr-scale-progress {
-    flex: 1;
-    height: 6px;
-    border-radius: 3px;
-    background: #e5e7eb;
-    appearance: none;
-}
-
-.qr-scale-progress::-webkit-progress-bar {
-    background: transparent;
-}
-
-.qr-scale-progress::-webkit-progress-value {
-    background: #2563eb;
-}
-
-.qr-scale-progress:-moz-progress-bar {
-    background: #2563eb;
-}
-
-.qr-scale-value {
-    min-width: 30px;
+.slider-value {
+    min-width: 40px;
     font-weight: 600;
     text-align: right;
+    color: #0b57d0;
 }
 
 .pdf-editor-stage {

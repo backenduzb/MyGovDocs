@@ -90,22 +90,31 @@ class DocumentAdmin(admin.ModelAdmin):
              data-pin="{obj.pin}">
 
             <div class="pdf-editor-toolbar">
-                <label class="qr-scale-control">
-                    <span class="qr-scale-control-label">QR scale:</span>
-                    <input
-                        type="range"
-                        min="0.05"
-                        max="0.4"
-                        step="0.01"
-                        value="{obj.qr_scale}"
-                        id="qr-scale-slider">
-                    <div class="qr-scale-indicator">
-                        <progress id="qr-scale-progress" class="qr-scale-progress" max="100" value="0"></progress>
-                        <span id="qr-scale-value" class="qr-scale-value">0</span>
+                <label class="slider-control">
+                    <span class="slider-control-label">QR scale:</span>
+                    <div class="slider-value-row">
+                        <input
+                            type="range"
+                            min="0.05"
+                            max="0.4"
+                            step="0.01"
+                            value="{obj.qr_scale}"
+                            id="qr-scale-slider">
+                        <span id="qr-scale-value" class="slider-value">0%</span>
                     </div>
                 </label>
-                <label>PIN size:
-                    <input type="range" min="8" max="40" step="0.5" value="{obj.pin_font_size}" id="pin-font-slider">
+                <label class="slider-control">
+                    <span class="slider-control-label">PIN size:</span>
+                    <div class="slider-value-row">
+                        <input
+                            type="range"
+                            min="8"
+                            max="40"
+                            step="0.5"
+                            value="{obj.pin_font_size}"
+                            id="pin-font-slider">
+                        <span id="pin-font-value" class="slider-value">0%</span>
+                    </div>
                 </label>
             </div>
 
