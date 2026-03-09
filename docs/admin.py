@@ -58,7 +58,8 @@ class DocumentAdmin(admin.ModelAdmin):
             return HttpResponse(status=404)
 
         doc = fitz.open(obj.file.path)
-        page = doc[-1]  # oxirgi sahifa
+        page_index = max(0, min(obj.qr_page - 1, len(doc) - 1))
+        page = doc[page_index]
         pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
         img_bytes = pix.tobytes("png")
         doc.close()
