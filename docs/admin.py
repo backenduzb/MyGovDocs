@@ -129,7 +129,7 @@ class DocumentAdmin(admin.ModelAdmin):
                 <img src="{preview_url}" id="pdf-preview-image" class="pdf-preview-image" />
 
                 <div id="qr-box" class="draggable qr-box">
-                    {f'<img src="{qr_url}" alt="QR" />' if qr_url else '<div class="qr-box-inner">QR yo\\'q</div>'}
+                    {f'<img src="{qr_url}" alt="QR" />' if qr_url else '<div class="qr-box-inner">QR yo\'q</div>'}
                 </div>
 
                 <div id="pin-box" class="draggable pin-box">{obj.pin or ""}</div>
