@@ -53,17 +53,21 @@ class DocumentAdmin(admin.ModelAdmin):
     def preview_image_view(self, request, object_id):
         obj = Document.objects.get(pk=object_id)
 
-        # Preview har doim original/source PDF dan olinadi
         preview_file = obj.source_file if obj.source_file else obj.file
         if not preview_file:
             return HttpResponse(status=404)
 
-        doc = fitz.open(preview_file.path)
-        page_index = max(0, min((obj.qr_page or 1) - 1, len(doc) - 1))
-        page = doc[page_index]
-        pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
-        img_bytes = pix.tobytes("png")
-        doc.close()
+        try:
+            doc = fitz.open(preview_file.path)
+            page_index = max(0, min((obj.qr_page or 1) - 1, len(doc) - 1))
+            page = doc[page_index]
+            pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
+            img_bytes = pix.tobytes("png")
+        finally:
+            try:
+                doc.close()
+            except Exception:
+                pass
 
         return HttpResponse(img_bytes, content_type="image/png")
 
@@ -125,10 +129,10 @@ class DocumentAdmin(admin.ModelAdmin):
                 <img src="{preview_url}" id="pdf-preview-image" class="pdf-preview-image" />
 
                 <div id="qr-box" class="draggable qr-box">
-                    {f'<img src="{qr_url}" alt="QR" />' if qr_url else '<div class="qr-box-inner">QR yo\'q</div>'}
+                    {f'<img src="{qr_url}" alt="QR" />' if qr_url else '<div class="qr-box-inner">QR yo\\'q</div>'}
                 </div>
 
-                <div id="pin-box" class="draggable pin-box">{obj.pin}</div>
+                <div id="pin-box" class="draggable pin-box">{obj.pin or ""}</div>
             </div>
         </div>
         """
@@ -137,29 +141,28 @@ class DocumentAdmin(admin.ModelAdmin):
     pdf_editor.short_description = "PDF preview editor"
 
     def save_model(self, request, obj, form, change):
-        old_obj = None
-        if change and obj.pk:
-            old_obj = Document.objects.filter(pk=obj.pk).first()
-
-        new_uploaded_file = bool(form.cleaned_data.get("file"))
+        # file haqiqatan almashtirilgan bo'lsa shu True bo'ladi
+        file_changed = "file" in form.changed_data
 
         super().save_model(request, obj, form, change)
 
-        file_changed = False
-        if not old_obj:
-            file_changed = True
-        elif new_uploaded_file:
-            file_changed = True
-        elif old_obj and old_obj.file.name != obj.file.name:
-            file_changed = True
-
-        # source_file faqat original uchun
+        # source_file faqat original PDF uchun
+        # yangi obyekt bo'lsa yoki yangi file upload qilinsa yangilanadi
         if obj.file and (not obj.source_file or file_changed):
             obj.file.open("rb")
             original_bytes = obj.file.read()
             obj.file.close()
 
-            source_name = f"source_{os.path.basename(obj.file.name)}"
+            source_basename = os.path.basename(obj.file.name)
+            source_name = f"source_{source_basename}"
+
+            # eski source fayl bo'lsa va nomi boshqa bo'lsa o'chirib yuboramiz
+            old_source_name = obj.source_file.name if obj.source_file else None
+            if old_source_name and old_source_name != source_name:
+                source_storage = obj.source_file.storage
+                if source_storage.exists(old_source_name):
+                    source_storage.delete(old_source_name)
+
             obj.source_file.save(
                 source_name,
                 ContentFile(original_bytes),
@@ -182,7 +185,7 @@ class DocumentAdmin(admin.ModelAdmin):
             save=False,
         )
 
-        self._render_pdf_with_qr(obj, randomize_file_name=(change and file_changed))
+        self._render_pdf_with_qr(obj, randomize_file_name=file_changed)
         obj.save(update_fields=["qr", "file"])
 
     def _render_pdf_with_qr(self, obj, randomize_file_name=False):
@@ -204,11 +207,12 @@ class DocumentAdmin(admin.ModelAdmin):
                 return max(minimum, min(maximum, value))
 
             # QR
-            qr_scale = max(obj.qr_scale or 0.14, 0.01)
+            qr_scale = max(float(obj.qr_scale or 0.14), 0.01)
             qr_size = min(width, height) * qr_scale
 
-            qr_x = clamp((obj.qr_x or 0) * width, 0, max(0, width - qr_size))
-            qr_y = clamp((obj.qr_y or 0) * height, 0, max(0, height - qr_size))
+            qr_x = clamp(float(obj.qr_x or 0) * width, 0, max(0, width - qr_size))
+            qr_y = clamp(float(obj.qr_y or 0) * height, 0, max(0, height - qr_size))
+
             qr_rect = fitz.Rect(qr_x, qr_y, qr_x + qr_size, qr_y + qr_size)
 
             if os.path.exists(obj.qr.path):
@@ -231,8 +235,16 @@ class DocumentAdmin(admin.ModelAdmin):
                 box_width = text_width + (pad_x * 2)
                 box_height = text_height + (pad_y * 2)
 
-                pin_left = clamp((obj.pin_x or 0) * width, 0, max(0, width - box_width))
-                pin_top = clamp((obj.pin_y or 0) * height, 0, max(0, height - box_height))
+                pin_left = clamp(
+                    float(obj.pin_x or 0) * width,
+                    0,
+                    max(0, width - box_width),
+                )
+                pin_top = clamp(
+                    float(obj.pin_y or 0) * height,
+                    0,
+                    max(0, height - box_height),
+                )
 
                 pin_rect = fitz.Rect(
                     pin_left,
@@ -250,7 +262,7 @@ class DocumentAdmin(admin.ModelAdmin):
 
                 text_point = fitz.Point(
                     pin_left + pad_x,
-                    pin_top + pad_y + pin_font * 0.9,
+                    pin_top + pad_y + (pin_font * 0.9),
                 )
 
                 page.insert_text(
@@ -266,7 +278,9 @@ class DocumentAdmin(admin.ModelAdmin):
         finally:
             doc.close()
 
-        original_name = os.path.basename(obj.source_file.name or obj.file.name or "document.pdf")
+        original_name = os.path.basename(
+            obj.source_file.name or obj.file.name or "document.pdf"
+        )
         base_name, ext = os.path.splitext(original_name)
 
         if not ext:
@@ -275,7 +289,11 @@ class DocumentAdmin(admin.ModelAdmin):
         if randomize_file_name:
             dest_name = f"{uuid.uuid4().hex}{ext}"
         else:
-            dest_name = f"{base_name}{ext}"
+            # source_ prefiksini olib tashlab saqlasa chiroyliroq bo'ladi
+            cleaned_base_name = base_name
+            if cleaned_base_name.startswith("source_"):
+                cleaned_base_name = cleaned_base_name[len("source_"):]
+            dest_name = f"{cleaned_base_name}{ext}"
 
         old_name = obj.file.name if obj.file else None
         if old_name and old_name != dest_name:
