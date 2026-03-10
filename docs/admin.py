@@ -204,8 +204,21 @@ class DocumentAdmin(admin.ModelAdmin):
             pin_x = clamp((obj.pin_x or 0) * width, 0, width)
             pin_y = clamp((obj.pin_y or 0) * height, 0, height)
             pin_font = max(obj.pin_font_size or 22.5, 6)
+            text = obj.pin or ""
+            
+            text_width = fitz.get_text_length(text, fontname="helv", fontsize=pin_font)
+            text_height = pin_font * 1.4
+            
+            rect = fitz.Rect(
+                pin_x - 8,
+                pin_y - text_height,
+                pin_x + text_width + 8,
+                pin_y + 8
+            )
+            
+            page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
             page.insert_text(
-                fitz.Point(pin_x - 4, (pin_y + 24)),
+                fitz.Point(pin_x - 6, (pin_y + 26)),
                 obj.pin or "",
                 fontname="helv",
                 fontsize=pin_font,
