@@ -1,4 +1,5 @@
 import os
+import uuid
 from io import BytesIO
 
 import fitz
@@ -137,96 +138,144 @@ class DocumentAdmin(admin.ModelAdmin):
         old_obj = None
         if change:
             old_obj = Document.objects.filter(pk=obj.pk).first()
-
+    
+        new_uploaded_file = bool(form.cleaned_data.get("file"))
+    
         super().save_model(request, obj, form, change)
-
+    
         file_changed = False
-        if old_obj and old_obj.file != obj.file:
-            file_changed = True
         if not old_obj:
             file_changed = True
-
+        elif new_uploaded_file:
+            file_changed = True
+        elif old_obj and old_obj.file.name != obj.file.name:
+            file_changed = True
+    
         if obj.file and (not obj.source_file or file_changed):
             obj.file.open("rb")
             original_bytes = obj.file.read()
             obj.file.close()
-
+    
+            source_name = f"source_{os.path.basename(obj.file.name)}"
             obj.source_file.save(
-                f"source_{os.path.basename(obj.file.name)}",
+                source_name,
                 ContentFile(original_bytes),
                 save=False,
             )
             obj.save(update_fields=["source_file"])
-
+    
         url = request.build_absolute_uri(
             reverse("doc-access") + f"?guid={obj.guid}"
         ).replace("http://", "https://")
-
+    
         qr_img = qrcode.make(url)
         qr_buf = BytesIO()
         qr_img.save(qr_buf, format="PNG")
         qr_bytes = qr_buf.getvalue()
-
-        obj.qr.save(f"doc_{obj.guid}.png", ContentFile(qr_bytes), save=False)
-
-        self._render_pdf_with_qr(obj)
-
+    
+        obj.qr.save(
+            f"doc_{obj.guid}.png",
+            ContentFile(qr_bytes),
+            save=False
+        )
+    
+        self._render_pdf_with_qr(obj, randomize_file_name=(change and file_changed))
+    
         obj.save(update_fields=["qr", "file"])
-
-    def _render_pdf_with_qr(self, obj):
-        if not obj.source_file or not obj.qr or not obj.file:
+        
+    def _render_pdf_with_qr(self, obj, randomize_file_name=False):
+        if not obj.source_file or not obj.qr:
             return
-
+    
         try:
             doc = fitz.open(obj.source_file.path)
         except Exception:
             return
-
+    
         try:
-            page_index = max(0, min(obj.qr_page - 1, len(doc) - 1))
+            page_index = max(0, min((obj.qr_page or 1) - 1, len(doc) - 1))
             page = doc[page_index]
             width = page.rect.width
             height = page.rect.height
-
+    
             def clamp(value, minimum, maximum):
                 return max(minimum, min(maximum, value))
-
+    
             qr_scale = max(obj.qr_scale or 0.14, 0.01)
             qr_size = min(width, height) * qr_scale
-
+    
             qr_x = clamp((obj.qr_x or 0) * width, 0, max(0, width - qr_size))
             qr_y = clamp((obj.qr_y or 0) * height, 0, max(0, height - qr_size))
-
+    
             qr_rect = fitz.Rect(qr_x, qr_y, qr_x + qr_size, qr_y + qr_size)
+    
             if os.path.exists(obj.qr.path):
                 page.insert_image(qr_rect, filename=obj.qr.path, overlay=True)
-
-            pin_x = clamp((obj.pin_x or 0) * width, 0, width)
-            pin_y = clamp((obj.pin_y or 0) * height, 0, height)
-            pin_font = max(obj.pin_font_size or 22.5, 6)
-            text = obj.pin or ""
-            
-            text_width = fitz.get_text_length(text, fontname="helv", fontsize=pin_font)
-            text_height = pin_font * 1.4
-            
-            rect = fitz.Rect(
-                pin_x - 8,
-                pin_y - text_height,
-                pin_x + text_width + 8,
-                pin_y + 8
-            )
-            
-            page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
-            page.insert_text(
-                fitz.Point(pin_x - 6, (pin_y + 26)),
-                obj.pin or "",
-                fontname="helv",
-                fontsize=pin_font,
-                color=(0, 0, 0),
-            )
-
+    
+            text = (obj.pin or "").strip()
+            if text:
+                pin_font = max(float(obj.pin_font_size or 22.5), 6)
+    
+                pad_x = 6
+                pad_y = 4
+    
+                text_width = fitz.get_text_length(text, fontname="helv", fontsize=pin_font)
+                text_height = pin_font * 1.2
+    
+                box_width = text_width + (pad_x * 2)
+                box_height = text_height + (pad_y * 2)
+    
+                pin_left = clamp((obj.pin_x or 0) * width, 0, max(0, width - box_width))
+                pin_top = clamp((obj.pin_y or 0) * height, 0, max(0, height - box_height))
+    
+                pin_rect = fitz.Rect(
+                    pin_left,
+                    pin_top,
+                    pin_left + box_width,
+                    pin_top + box_height,
+                )
+    
+                page.draw_rect(
+                    pin_rect,
+                    color=(1, 1, 1),
+                    fill=(1, 1, 1),
+                    overlay=True,
+                )
+    
+                text_point = fitz.Point(
+                    pin_left + pad_x,
+                    pin_top + pad_y + pin_font
+                )
+    
+                page.insert_text(
+                    text_point,
+                    text,
+                    fontname="helv",
+                    fontsize=pin_font,
+                    color=(0, 0, 0),
+                    overlay=True,
+                )
+    
             pdf_bytes = doc.write()
         finally:
             doc.close()
-
-        obj.file.save(obj.file.name, ContentFile(pdf_bytes), save=False)
+    
+        original_name = os.path.basename(obj.source_file.name or obj.file.name or "document.pdf")
+        base_name, ext = os.path.splitext(original_name)
+    
+        if not ext:
+            ext = ".pdf"
+    
+        if randomize_file_name:
+            dest_name = f"{uuid.uuid4().hex}{ext}"
+        else:
+            dest_name = f"{base_name}{ext}"
+    
+        old_name = obj.file.name if obj.file else None
+    
+        if old_name and old_name != dest_name:
+            storage = obj.file.storage
+            if storage.exists(old_name):
+                storage.delete(old_name)
+    
+        obj.file.save(dest_name, ContentFile(pdf_bytes), save=False)
