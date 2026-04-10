@@ -37,19 +37,22 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function placeElements() {
-    const w = img.clientWidth;
-    const h = img.clientHeight;
-
+    const rect = img.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+  
     const qrScale = parseFloat(qrScaleInput.value || dataQrScale);
     const qrSize = Math.min(w, h) * qrScale;
-
+  
     qrBox.style.width = qrSize + "px";
     qrBox.style.height = qrSize + "px";
+  
     qrBox.style.left = parseFloat(qrXInput.value || dataQrX) * w + "px";
     qrBox.style.top = parseFloat(qrYInput.value || dataQrY) * h + "px";
-
+  
     pinBox.style.left = parseFloat(pinXInput.value || dataPinX) * w + "px";
     pinBox.style.top = parseFloat(pinYInput.value || dataPinY) * h + "px";
+  
     pinBox.style.fontSize =
       parseFloat(pinFontInput.value || dataPinFont) + "px";
   }
@@ -106,15 +109,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function saveQrPosition() {
-    qrXInput.value = (qrBox.offsetLeft / img.clientWidth).toFixed(6);
-    qrYInput.value = (qrBox.offsetTop / img.clientHeight).toFixed(6);
+    const imgRect = img.getBoundingClientRect();
+    const qrRect = qrBox.getBoundingClientRect();
+  
+    qrXInput.value = ((qrRect.left - imgRect.left) / imgRect.width).toFixed(6);
+    qrYInput.value = ((qrRect.top - imgRect.top) / imgRect.height).toFixed(6);
   }
-
+  
   function savePinPosition() {
-    pinXInput.value = (pinBox.offsetLeft / img.clientWidth).toFixed(6);
-    pinYInput.value = (pinBox.offsetTop / img.clientHeight).toFixed(6);
+    const imgRect = img.getBoundingClientRect();
+    const pinRect = pinBox.getBoundingClientRect();
+  
+    pinXInput.value = ((pinRect.left - imgRect.left) / imgRect.width).toFixed(6);
+    pinYInput.value = ((pinRect.top - imgRect.top) / imgRect.height).toFixed(6);
   }
-
   qrScaleSlider.addEventListener("input", function () {
     qrScaleInput.value = this.value;
     updateSliderLabel(qrScaleSlider, qrScaleValue, qrScaleMin, qrScaleRange);
