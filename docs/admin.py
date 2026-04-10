@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.conf import settings
 
 from .forms import DocumentAdminForm
 from .models import Document
@@ -141,13 +142,10 @@ class DocumentAdmin(admin.ModelAdmin):
     pdf_editor.short_description = "PDF preview editor"
 
     def save_model(self, request, obj, form, change):
-        # file haqiqatan almashtirilgan bo'lsa shu True bo'ladi
         file_changed = "file" in form.changed_data
 
         super().save_model(request, obj, form, change)
 
-        # source_file faqat original PDF uchun
-        # yangi obyekt bo'lsa yoki yangi file upload qilinsa yangilanadi
         if obj.file and (not obj.source_file or file_changed):
             obj.file.open("rb")
             original_bytes = obj.file.read()
@@ -156,7 +154,6 @@ class DocumentAdmin(admin.ModelAdmin):
             source_basename = os.path.basename(obj.file.name)
             source_name = f"source_{source_basename}"
 
-            # eski source fayl bo'lsa va nomi boshqa bo'lsa o'chirib yuboramiz
             old_source_name = obj.source_file.name if obj.source_file else None
             if old_source_name and old_source_name != source_name:
                 source_storage = obj.source_file.storage
@@ -206,7 +203,6 @@ class DocumentAdmin(admin.ModelAdmin):
             def clamp(value, minimum, maximum):
                 return max(minimum, min(maximum, value))
 
-            # QR
             qr_scale = max(float(obj.qr_scale or 0.14), 0.01)
             qr_size = min(width, height) * qr_scale
 
@@ -218,7 +214,6 @@ class DocumentAdmin(admin.ModelAdmin):
             if os.path.exists(obj.qr.path):
                 page.insert_image(qr_rect, filename=obj.qr.path, overlay=True)
 
-            # PIN
             text = (obj.pin or "").strip()
             if text:
                 pin_font = max(float(obj.pin_font_size or 22.5), 6)
@@ -264,12 +259,13 @@ class DocumentAdmin(admin.ModelAdmin):
                     pin_left + pad_x,
                     pin_top + pad_y + (pin_font * 0.9),
                 )
-
+                font_path = os.path.join(settings.BASE_DIR, "fonts/cambria.ttf")
                 page.insert_text(
                     text_point,
                     text,
                     fontname="helv",
                     fontsize=pin_font,
+                    fontfile=font_path,
                     color=(0, 0, 0),
                     overlay=True,
                 )
@@ -289,7 +285,6 @@ class DocumentAdmin(admin.ModelAdmin):
         if randomize_file_name:
             dest_name = f"{uuid.uuid4().hex}{ext}"
         else:
-            # source_ prefiksini olib tashlab saqlasa chiroyliroq bo'ladi
             cleaned_base_name = base_name
             if cleaned_base_name.startswith("source_"):
                 cleaned_base_name = cleaned_base_name[len("source_"):]
