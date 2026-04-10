@@ -188,48 +188,55 @@ class DocumentAdmin(admin.ModelAdmin):
     def _render_pdf_with_qr(self, obj, randomize_file_name=False):
         if not obj.source_file or not obj.qr:
             return
-
+    
         try:
             doc = fitz.open(obj.source_file.path)
         except Exception:
             return
-
+    
         try:
             page_index = max(0, min((obj.qr_page or 1) - 1, len(doc) - 1))
             page = doc[page_index]
             width = page.rect.width
             height = page.rect.height
-
+    
             def clamp(value, minimum, maximum):
                 return max(minimum, min(maximum, value))
-
+    
             qr_scale = max(float(obj.qr_scale or 0.14), 0.01)
             qr_size = min(width, height) * qr_scale
-
+    
             qr_x = clamp(float(obj.qr_x or 0) * width, 0, max(0, width - qr_size))
             qr_y = clamp(float(obj.qr_y or 0) * height, 0, max(0, height - qr_size))
-
+    
             qr_rect = fitz.Rect(qr_x, qr_y, qr_x + qr_size, qr_y + qr_size)
-
-            if os.path.exists(obj.qr.path):
+    
+            if obj.qr and os.path.exists(obj.qr.path):
                 page.insert_image(qr_rect, filename=obj.qr.path, overlay=True)
-
+    
             text = (obj.pin or "").strip()
             if text:
-                pin_font = max(float(obj.pin_font_size or 22.5), 6)
+                font_path = os.path.join(settings.BASE_DIR, "fonts/cambria.ttf")
+    
+                pin_font = int(max(float(obj.pin_font_size or 22.5), 6))
                 pad_x = 6
                 pad_y = 4
-
-                text_width = fitz.get_text_length(
-                    text,
-                    fontname="helv",
-                    fontsize=pin_font,
-                )
+    
+                try:
+                    font = fitz.Font(fontfile=font_path)
+                    text_width = font.text_length(text, fontsize=pin_font)
+                except Exception:
+                    text_width = fitz.get_text_length(
+                        text,
+                        fontname="helv",
+                        fontsize=pin_font,
+                    )
+    
                 text_height = pin_font * 1.2
-
+    
                 box_width = text_width + (pad_x * 2)
                 box_height = text_height + (pad_y * 2)
-
+    
                 pin_left = clamp(
                     float(obj.pin_x or 0) * width,
                     0,
@@ -240,48 +247,60 @@ class DocumentAdmin(admin.ModelAdmin):
                     0,
                     max(0, height - box_height),
                 )
-
+    
                 pin_rect = fitz.Rect(
                     pin_left,
                     pin_top,
                     pin_left + box_width,
                     pin_top + box_height,
                 )
-
+    
                 page.draw_rect(
                     pin_rect,
                     color=(1, 1, 1),
                     fill=(1, 1, 1),
                     overlay=True,
                 )
-
+    
                 text_point = fitz.Point(
                     pin_left + pad_x,
                     pin_top + pad_y + (pin_font * 0.9),
                 )
-                font_path = os.path.join(settings.BASE_DIR, "fonts/cambria.ttf")
-                page.insert_text(
-                    text_point,
-                    text,
-                    fontsize=pin_font,
-                    fontname="custom",
-                    fontfile=font_path,
-                    color=(0, 0, 0),
-                    overlay=True,
-                )
-
+    
+                try:
+                    page.insert_text(
+                        text_point,
+                        text,
+                        fontsize=pin_font,
+                        fontname="custom",
+                        fontfile=font_path,
+                        color=(0, 0, 0),
+                        overlay=True,
+                    )
+                except Exception:
+                    page.insert_text(
+                        text_point,
+                        text,
+                        fontsize=pin_font,
+                        fontname="helv",
+                        color=(0, 0, 0),
+                        overlay=True,
+                    )
+    
             pdf_bytes = doc.write()
+    
         finally:
             doc.close()
-
+    
+        # ===== FILE SAVE =====
         original_name = os.path.basename(
             obj.source_file.name or obj.file.name or "document.pdf"
         )
         base_name, ext = os.path.splitext(original_name)
-
+    
         if not ext:
             ext = ".pdf"
-
+    
         if randomize_file_name:
             dest_name = f"{uuid.uuid4().hex}{ext}"
         else:
@@ -289,11 +308,11 @@ class DocumentAdmin(admin.ModelAdmin):
             if cleaned_base_name.startswith("source_"):
                 cleaned_base_name = cleaned_base_name[len("source_"):]
             dest_name = f"{cleaned_base_name}{ext}"
-
+    
         old_name = obj.file.name if obj.file else None
         if old_name and old_name != dest_name:
             storage = obj.file.storage
             if storage.exists(old_name):
                 storage.delete(old_name)
-
+    
         obj.file.save(dest_name, ContentFile(pdf_bytes), save=False)
