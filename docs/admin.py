@@ -263,7 +263,6 @@ class DocumentAdmin(admin.ModelAdmin):
                 page.insert_text(
                     text_point,
                     text,
-                    fontname="helv",
                     fontsize=pin_font,
                     fontfile=font_path,
                     color=(0, 0, 0),
