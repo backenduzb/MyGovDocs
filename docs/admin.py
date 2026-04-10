@@ -264,6 +264,7 @@ class DocumentAdmin(admin.ModelAdmin):
                     text_point,
                     text,
                     fontsize=pin_font,
+                    fontname="custom",
                     fontfile=font_path,
                     color=(0, 0, 0),
                     overlay=True,
