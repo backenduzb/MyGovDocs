@@ -281,15 +281,6 @@ chmod +x entrypoint.sh
 ```bash
 docker-compose logs web
 ```
-
-## 📝 License
-
-[Add your license here]
-
-## 👥 Contributors
-
-[Add contributors here]
-
 ## 📧 Contact
 
 For issues and questions, please open an issue on GitHub.
